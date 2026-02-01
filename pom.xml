@@ -119,6 +119,7 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
+        <!-- Extension -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>

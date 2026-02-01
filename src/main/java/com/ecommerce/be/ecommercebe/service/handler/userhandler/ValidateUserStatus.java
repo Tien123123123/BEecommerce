@@ -5,6 +5,8 @@ import com.ecommerce.be.ecommercebe.dto.response.UserResponse;
 import com.ecommerce.be.ecommercebe.model.UserEntity;
 import com.ecommerce.be.ecommercebe.repository.UserRepository;
 import com.ecommerce.be.ecommercebe.service.UserService;
+import com.ecommerce.be.ecommercebe.service.handler.Handler;
+import com.ecommerce.be.ecommercebe.service.handler.ValidateResult;
 import lombok.RequiredArgsConstructor;
 /**
  Validate if user is banned (soft-delete) or not
@@ -12,16 +14,13 @@ import lombok.RequiredArgsConstructor;
  - Output: success
  **/
 @RequiredArgsConstructor
-public class CheckUserStatus extends UserHandler<UserResponse>{
-    private final UserService userService;
-
+public class ValidateUserStatus extends Handler<UserResponse> {
     @Override
-    protected UserCheckResult<?> checkValid(UserResponse userDTO) {
-        UserEntity user = userService.getUser(userDTO.getId());
-        if(user.isSoft_delete() || user.isActive()){
-            UserCheckResult.fail("User is deleted!");
+    protected ValidateResult<UserResponse> doValidate(UserResponse object) {
+        if(object.getSoftDelete()){
+            return ValidateResult.fail("User " + object.getUsername() + " is deleted!");
         }
 
-        return UserCheckResult.success(userDTO);
+        return ValidateResult.success(object);
     }
 }

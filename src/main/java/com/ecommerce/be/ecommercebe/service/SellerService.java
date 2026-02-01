@@ -8,6 +8,8 @@ import com.ecommerce.be.ecommercebe.model.SellerEntity;
 import com.ecommerce.be.ecommercebe.model.UserEntity;
 import com.ecommerce.be.ecommercebe.repository.SellerRepository;
 import com.ecommerce.be.ecommercebe.repository.UserRepository;
+import com.ecommerce.be.ecommercebe.service.handler.Handler;
+import com.ecommerce.be.ecommercebe.service.handler.ValidateResult;
 import com.ecommerce.be.ecommercebe.service.handler.userhandler.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -44,10 +46,10 @@ public class SellerService {
         UserEntity user = userService.getUser(id);
         UserResponse userDTO = userMapper.toDTO(user);
         // Check User
-        UserHandler<UserResponse> handler = new CheckUserStatus(userService);
-        handler.setNext(new CheckSellerStatus(userService));
-        handler.setNext(new ValidateCitizenId(sellerDTO.getCitizenIdentity()));
-        UserCheckResult<?> result = handler.handle(userDTO);
+        Handler<UserResponse> handler = new ValidateUserStatus();
+        ValidateResult<UserResponse> result = handler.validate(userDTO);
+
+
         // Fail case
         if(!result.isStatus()){
             throw new RuntimeException(result.getMessage());

@@ -26,7 +26,5 @@ public abstract class BaseEntity implements Serializable {
     @UpdateTimestamp
     private LocalDateTime updateAt;
     @Column
-    private boolean isActive = false;
-    @Column
-    private boolean soft_delete = false;
+    private boolean softDelete = false; // delete entity
 }

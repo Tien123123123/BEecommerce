@@ -21,10 +21,10 @@ public class UserEntity extends BaseEntity{
     @Column
     private String password;
     @Column
-    private int phone;
+    private String phone;
     @Column
     private String address;
-    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.EAGER) // EAGER -> Instance Load
+    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.LAZY) // EAGER -> Instance Load
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING) // String | Ordinal
     @Column
