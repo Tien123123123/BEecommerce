@@ -36,8 +36,7 @@ public class UserController {
     @PostMapping
     public ResponseData<UserResponse> createUser(@RequestBody UserRegisterDTORequest userDTO){
         logger.info("[USER_CONTROLLER] Create User: {}", userDTO.getFullname());
-        UserResponse user = userMapper.toDTO(userService.createUser(userDTO));
-        kafkaTemplate.send(TOPIC, String.valueOf(user.getId()), user);
+        UserResponse user = userService.createUser(userDTO);
         return new ResponseData<UserResponse>("User created!", HttpStatus.CREATED.value(), user);
     }
     /**
@@ -47,7 +46,7 @@ public class UserController {
     @PatchMapping("/{id}")
     public ResponseData<SellerResponse> updateSeller(@PathVariable Long id, @RequestBody SellerRegisterDTORequest sellerDTO){
         logger.info("[USER_CONTROLLER] Update user to seller: {}", id);
-        SellerResponse seller = sellerMapper.toDTO(sellerService.promoteToSeller(id, sellerDTO));
+        SellerResponse seller = sellerService.promoteToSeller(id, sellerDTO);
         return new ResponseData<SellerResponse>("User promoted to Seller!", HttpStatus.CREATED.value(), seller);
     }
     /**
@@ -56,16 +55,15 @@ public class UserController {
     @GetMapping("/{id}")
     public ResponseData<UserResponse> getUser(@PathVariable Long id){
         logger.info("[USER_CONTROLLER] Get User: {}", id);
-        UserResponse user = userMapper.toDTO(userService.getUser(id));
-        kafkaTemplate.send(TOPIC, String.valueOf(user.getId()), user);
-        logger.info("[USER_CONTROLLER] Send userDTO to Kafka with Topic: {} - user Id: {}", TOPIC, user.getId());
+        UserResponse user = userService.getUserDetail(id);
+//        kafkaTemplate.send(TOPIC, String.valueOf(user.getId()), user);
+//        logger.info("[USER_CONTROLLER] Send userDTO to Kafka with Topic: {} - user Id: {}", TOPIC, user.getId());
         return new ResponseData<UserResponse>("User info!", HttpStatus.FOUND.value(), user);
     }
     @GetMapping("/seller/{id}")
     public ResponseData<SellerResponse> getSeller(@PathVariable Long id){
         logger.info("[USER_CONTROLLER] Get Seller: {}", id);
-        SellerResponse seller = sellerMapper.toDTO(sellerService.getSeller(id));
-        System.out.println(sellerService.getSeller(id).getCitizenIdentity());
+        SellerResponse seller = sellerService.getSellerDetails(id);
         return new ResponseData<SellerResponse>("Seller info!", HttpStatus.FOUND.value(), seller);
     }
     /**
@@ -74,8 +72,8 @@ public class UserController {
     @DeleteMapping("/{id}")
     public ResponseData<UserResponse> deleteUser(@PathVariable Long id){
         logger.info("[USER_CONTROLLER] Delete User: {}", id);
-        UserResponse user = userMapper.toDTO(userService.getUser(id));
+        userService.deleteUser(id);
 
-        return new ResponseData<UserResponse>("User deleted!", HttpStatus.ACCEPTED.value(), user);
+        return new ResponseData<UserResponse>("User " + id + " deleted!", HttpStatus.ACCEPTED.value(), null);
     }
 }

@@ -1,5 +1,7 @@
 package com.ecommerce.be.ecommercebe.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,14 +26,15 @@ public class UserEntity extends BaseEntity{
     private String phone;
     @Column
     private String address;
-    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.LAZY) // EAGER -> Instance Load
+    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.EAGER) // EAGER -> Instance Load
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING) // String | Ordinal
     @Column
     private Set<UserRole> roles = new HashSet<>(Set.of(UserRole.BUYER));
 
     // Seller
-    @OneToOne(mappedBy = "userEntity", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToOne(mappedBy = "userEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonManagedReference
     private SellerEntity seller;
 
     public enum UserRole{

@@ -30,12 +30,13 @@ public class UserService {
 
     /**
      **- Create User from User DTO
-     **- Input: UserRegisterDTORequest
-     **- Output: UserEntity
+     **- Input: DTO data
+     **- Output: DTO data
      **- Note: Data will be saved in DB and Cache (Write Back)
+     **! Cache save DTO data
      **/
     @CachePut(value = "users", key = "#result.id")
-    public UserEntity createUser(UserRegisterDTORequest userDTO){
+    public UserResponse createUser(UserRegisterDTORequest userDTO){
         logger.info("[USER_SERVICE][createUser] create user: {}", userDTO.getFullname());
         /**
          - Set chain to validate Input data
@@ -56,20 +57,31 @@ public class UserService {
         UserEntity saved = userRepository.save(user);
         logger.info("[USER_SERVICE][createUser] User Entity Key: {} - Name: {}", saved.getId(), saved.getUsername());
 
-        return saved;
+        return userMapper.toDTO(saved);
     }
     /**
      **- Get User by Id
      **- Input: User Id
-     **- Output: UserEntity
-     **- Note: Data will be gotten from Cache and DB (Read Through)
+     **- Output: Entity data
      **/
-    @Cacheable(value = "users", key = "#id")
-    public UserEntity getUser(Long id){
+    protected UserEntity getUser(Long id){
+        logger.info("[USER_SERVICE][getUser] get User : {}", id);
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("Invalid User By Id: " + id));
         return user;
     }
+    /**
+     **- Get User Detail by Id
+     **- Input: User Id
+     **- Output: DTO data
+     **- Note: Data will be gotten from Cache and DB (Read Through)
+     **! Cache save DTO data
+     **/
+    @Cacheable(value = "users", key = "#id")
+    public UserResponse getUserDetail(Long id){
+        return userMapper.toDTO(getUser(id));
+    }
+
     /**
      **- Soft delete User by Id
      **- Input: User Id
@@ -93,7 +105,7 @@ public class UserService {
      **/
     @CacheEvict(value = "users", key = "#id")
     @CachePut(value = "users", key = "#id")
-    public UserEntity restoreUser(Long id){
+    public UserResponse restoreUser(Long id){
         logger.info("[USER_SERVICE][restoreUser] recovering deleted user: {}", id );
         UserEntity user = getUser(id);
 
@@ -103,7 +115,7 @@ public class UserService {
 
         user.setSoftDelete(false);
         logger.info("User {} is restored", user.getUsername());
-
-        return userRepository.save(user);
+        UserEntity saved = userRepository.save(user);
+        return userMapper.toDTO(saved);
     }
 }

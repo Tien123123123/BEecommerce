@@ -12,9 +12,6 @@ import java.util.Set;
 
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@RequiredArgsConstructor
 public class UserResponse implements BaseValidate {
     private Long id;
     private String username;
@@ -22,11 +19,7 @@ public class UserResponse implements BaseValidate {
     private String phone;
     private String fullname;
     private Boolean softDelete;
-    private Set<UserEntity.UserRole> roles;
+    private Set<String> roles;
 
     private static final ObjectMapper mapper = new ObjectMapper();
-    @Override
-    public Map<String, Object> getAttributes() {
-        return mapper.convertValue(this, new TypeReference<Map<String, Object>>() {});
-    }
 }

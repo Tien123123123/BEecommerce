@@ -18,6 +18,6 @@ public class ValidateResult<T extends BaseValidate>{
         return new ValidateResult<>(true, "Pass", object);
     }
     public static <T extends BaseValidate> ValidateResult<T> fail(String message){
-        return new ValidateResult<>(false, "Fail", null);
+        return new ValidateResult<>(false, message, null);
     }
 }

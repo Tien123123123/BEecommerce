@@ -22,11 +22,7 @@ public class UserRegisterDTORequest implements BaseValidate {
 
     @Override
     public Long getId() {
-        return 0L;
+        return null;
     }
 
-    @Override
-    public Map<String, Object> getAttributes() {
-        return mapper.convertValue(this, new TypeReference<Map<String, Object>>() {});
-    }
 }

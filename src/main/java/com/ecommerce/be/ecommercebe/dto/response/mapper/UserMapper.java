@@ -11,7 +11,11 @@ public interface UserMapper {
 
     // DTO -> Entity
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "seller", ignore = true)
     UserEntity toEntity(UserRegisterDTORequest userDTO);
+
+
+    UserEntity toEntity(UserResponse userDTO);
     // Entity -> DTO
     @Mapping(target = "id", source = "id")
     UserResponse toDTO(UserEntity userEntity);

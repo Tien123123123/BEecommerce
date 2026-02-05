@@ -11,7 +11,7 @@ public class ValidateValidPassword extends Handler<UserRegisterDTORequest> {
 
     @Override
     protected ValidateResult<UserRegisterDTORequest> doValidate(UserRegisterDTORequest object) {
-        if(object.getPassword().equals(object.getConfirm_password())){
+        if(!object.getPassword().equals(object.getConfirm_password())){
             return ValidateResult.fail("Invalid Password!");
         }
 

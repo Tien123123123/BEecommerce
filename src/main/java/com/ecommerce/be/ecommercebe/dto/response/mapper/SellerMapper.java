@@ -14,5 +14,7 @@ public interface SellerMapper {
 
     // Entity -> DTO
     @Mapping(target = "user_id", source = "userEntity.id")
+    @Mapping(target = "shops", expression = "java(sellerEntity.getShops() != null ? " +
+            "sellerEntity.getShops().stream().map(s -> s.getShopName()).collect(java.util.stream.Collectors.toList()) : null)")
     SellerResponse toDTO(SellerEntity sellerEntity);
 }

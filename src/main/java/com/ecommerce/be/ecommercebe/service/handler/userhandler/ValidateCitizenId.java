@@ -1,17 +1,19 @@
 package com.ecommerce.be.ecommercebe.service.handler.userhandler;
 
 import com.ecommerce.be.ecommercebe.dto.response.UserResponse;
+import com.ecommerce.be.ecommercebe.service.handler.Handler;
+import com.ecommerce.be.ecommercebe.service.handler.ValidateResult;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
-public class ValidateCitizenId extends UserHandler<UserResponse>{
+public class ValidateCitizenId extends Handler<UserResponse> {
     private final String citizenIdentity;
     @Override
-    protected UserCheckResult<?> checkValid(UserResponse object) {
-        if(citizenIdentity.length() < 12){
-            UserCheckResult.fail("Invalid Citizen Identity!");
+    protected ValidateResult<UserResponse> doValidate(UserResponse object) {
+        if(citizenIdentity.length() < 13){
+            ValidateResult.fail("Invalid Citizen Identity!");
         }
 
-        return UserCheckResult.success(object);
+        return ValidateResult.success(object);
     }
 }
