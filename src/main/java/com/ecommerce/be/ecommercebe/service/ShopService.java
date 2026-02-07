@@ -58,4 +58,16 @@ public class ShopService {
 
         return shopMapper.toDTO(shop);
     }
+
+    /**
+     - Create Shop
+     - Type: Internal
+     - Input: seller and shop id
+     - Output: Shop Entity
+     - Note: Data will be gotten from Cache and DB (Read Through)
+     **/
+    protected ShopEntity getShop(Long seller_id, Long shop_id){
+        return shopRepository.findFirstBySeller_IdAndId(seller_id, shop_id)
+                .orElseThrow(()-> new RuntimeException("Cannot found shop by seller_id " + seller_id + " and " + " shop_id " + shop_id));
+    }
 }
