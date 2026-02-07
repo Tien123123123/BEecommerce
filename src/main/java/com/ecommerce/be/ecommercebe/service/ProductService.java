@@ -24,7 +24,8 @@ public class ProductService {
         ShopEntity shopEntity = shopService.getShop(sellerEntity.getUserEntity().getId(), shop_id);
 
         ProductEntity productEntity = productMapper.toEntity(productDTORequest);
-
+        productEntity.setShop(shopEntity);
+        productEntity.setSlug(productDTORequest.getProductName().replace(" ", "_"));
 
         return productMapper.toDTO(productEntity);
     }

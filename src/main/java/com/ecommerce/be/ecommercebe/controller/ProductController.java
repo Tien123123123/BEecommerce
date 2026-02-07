@@ -24,10 +24,6 @@ public class ProductController {
 
     @PostMapping("/{id}")
     public ResponseData<ProductResponse> createProduct(@PathVariable Long seller_id, @PathVariable Long id, @RequestBody ProductDTORequest productDTO){
-        SellerEntity SellerEntity = sellerService.getSeller(seller_id);
-        ShopEntity shopEntity = shopService.
-
-
         ProductResponse product = productService.createProduct(seller_id, id, productDTO);
 
 
