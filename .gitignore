@@ -34,4 +34,5 @@ build/
 
 ### Core ###
 .env
+*.md
 ### Resources ###
