@@ -1,6 +1,8 @@
 package com.ecommerce.be.ecommercebe.service;
 
+import com.ecommerce.be.ecommercebe.dto.BaseValidate;
 import com.ecommerce.be.ecommercebe.dto.request.SellerRegisterDTORequest;
+import com.ecommerce.be.ecommercebe.dto.request.UserRegisterDTORequest;
 import com.ecommerce.be.ecommercebe.dto.response.SellerResponse;
 import com.ecommerce.be.ecommercebe.dto.response.UserResponse;
 import com.ecommerce.be.ecommercebe.dto.response.mapper.SellerMapper;
@@ -12,6 +14,7 @@ import com.ecommerce.be.ecommercebe.repository.UserRepository;
 import com.ecommerce.be.ecommercebe.service.handler.Handler;
 import com.ecommerce.be.ecommercebe.service.handler.ValidateResult;
 import com.ecommerce.be.ecommercebe.service.handler.userhandler.*;
+import com.ecommerce.be.ecommercebe.util.HandlerFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -20,7 +23,6 @@ import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import org.springframework.kafka.core.KafkaTemplate;
 
@@ -32,93 +34,129 @@ import java.util.Optional;
 public class SellerService {
     private final SellerRepository sellerRepository;
     private final UserService userService;
-    private final UserMapper userMapper;
-    private final SellerMapper sellerMapper;
-    private final Logger logger = LoggerFactory.getLogger(SellerService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SellerService.class);
     private final UserRepository userRepository;
     private final CacheManager cacheManager;
+    private final HandlerFactory handlerFactory;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final SellerMapper sellerMapper;
+    private final UserMapper userMapper;
+    @jakarta.persistence.PersistenceContext
+    private jakarta.persistence.EntityManager entityManager;
 
     /**
-     - Promote User to Seller
-     - Input: User Id
-     - Output: SellerEntity
-     - Note: Data will be caught from Cache and DB (Read Through)
+     * - Description: Promote user to seller
+     * - Type: Public
+     * - Input: DTO data and User id
+     * - Output: DTO data
+     * - Note: Data will be saved in DB and Cache (Write Back)
+     * ! Cache save DTO data
      **/
     @CachePut(value = "sellers", key = "#result.id")
-    public SellerResponse promoteToSeller(Long id, SellerRegisterDTORequest sellerDTO){
+    public SellerResponse promoteToSeller(Long id, SellerRegisterDTORequest sellerDTO) {
         logger.info("[SELLER_SERVICE][promoteToSeller] promote User to Seller: {}", id);
-        UserEntity user = userService.getUser(id);
-        UserResponse userDTO = userMapper.toDTO(user);
+        UserEntity user = userService.getUser(id); // Get undeleted user
+        sellerDTO.setId(user.getId());
+
         // Check User
-//        Handler<UserResponse> handler = new ValidateUserStatus();
-//        handler.setNext(new ValidateCitizenId(sellerDTO.getCitizenIdentity())); //? Check CCCD
-//        ValidateResult<UserResponse> result = handler.validate(userDTO);
-//
-//
-//        // Fail case
-//        if(!result.isStatus()){
-//            throw new RuntimeException(result.getMessage());
-//        }
-//
-//        // Pass Case
-//        logger.info("[SELLER_SERVICE][promoteToSeller] Handler result: {} - {}", result.isStatus(), result.getMessage());
-//        logger.info("[SELLER_SERVICE][promoteToSeller] promoting User {} to Seller", user.getFullname());
-        SellerEntity seller = sellerMapper.toEntity(sellerDTO);
+        Handler<SellerRegisterDTORequest> sellerHandler = handlerFactory.getChain(SellerRegisterDTORequest.class);
+        if (sellerHandler != null) {
+            ValidateResult<? extends BaseValidate> result = sellerHandler.validate(sellerDTO);
+            if (!result.isStatus()) {
+                logger.warn("[USER_SERVICE][createUser] error: {}", result.getMessage());
+                throw new RuntimeException(result.getMessage());
+            }
+        } else {
+            logger.warn("No validations chain for UserRegisterDTORequest");
+        }
 
-        seller.setUserEntity(user);
+        SellerEntity seller = sellerRepository.findByUserIdIncludingDeleted(id).orElse(null);
+
+        if (seller == null) {
+            seller = sellerMapper.toEntity(sellerDTO);
+            seller.setUserEntity(user);
+        } else {
+            seller.setCitizenIdentity(sellerDTO.getCitizenIdentity());
+            Boolean isDeleted = sellerRepository.isSoftDeleted(seller.getId());
+            if (Boolean.TRUE.equals(isDeleted)) {
+                sellerRepository.restoreById(seller.getId());
+                entityManager.flush();
+                entityManager.refresh(seller);
+            }
+        }
+
+        // ? Set Seller
         user.setSeller(seller);
-
+        // ? Add Role
         user.getRoles().add(UserEntity.UserRole.SELLER);
-        System.out.println(seller.getUserEntity().getId());
-        System.out.println(seller.getCitizenIdentity());
 
-        logger.info("[SELLER_SERVICE][promoteToSeller] Get Seller {} Info before save", seller.getUserEntity().getFullname());
+        logger.info("[SELLER_SERVICE][promoteToSeller] Get Seller {} Info before save",
+                seller.getUserEntity().getFullname());
+
+        seller = sellerRepository.save(seller);
+        entityManager.flush();
+
         UserEntity saved = userRepository.save(user);
-        // Update User Cache
+        // ? Update User Cache
         UserResponse savedDTO = userMapper.toDTO(saved);
         cacheManager.getCache("users").put(id, savedDTO);
 
-
         return sellerMapper.toDTO(saved.getSeller());
     }
+
     /**
-     - Get Seller
-     - Input: User id
-     - Output: UserEntity
-     - Note: Data will be gotten from Cache and DB (Read Through)
+     * - Description: Get seller by id
+     * - Type: Internal
+     * - Input: Id (User id)
+     * - Output: Seller Entity
      **/
-    public SellerEntity getSeller(Long id){
+    protected SellerEntity getSeller(Long id) {
         logger.info("[SELLER_SERVICE][getSeller] Get Seller: {}", id);
         return sellerRepository.findByUserEntity_Id((id))
-                .orElseThrow(()->new RuntimeException("Invalid Seller id " + id));
+                .orElseThrow(() -> new RuntimeException("Invalid Seller id " + id));
     }
 
+    /**
+     * - Description: Get seller by id
+     * - Type: Public
+     * - Input: Id (User id)
+     * - Output: DTO data
+     * - Note: Data will be gotten from Cache then DB (Read Through)
+     * ! Cache save DTO data
+     **/
     @Cacheable(value = "sellers", key = "#id")
-    public SellerResponse getSellerDetails(Long id){
+    public SellerResponse getSellerDetails(Long id) {
         logger.info("[SELLER_SERVICE][getSellerDetails] Get Seller: {}", id);
         return sellerMapper.toDTO(getSeller(id));
     }
 
     /**
-     - Delete Seller
-     - Input: User id
-     - Output: soft-delete = true
-     - Note: Data will be gotten from Cache and DB (Read Through)
+     * - Description: Delete seller by Id
+     * - Type: Public
+     * - Input: Id (User id)
+     * - Output: Soft-delete = true
      **/
     @CacheEvict(value = "sellers", key = "#id")
-    public void deleteSeller(Long id){
-        SellerEntity seller = getSeller(id);
-        SellerResponse sellerDTO = sellerMapper.toDTO(seller);
-
+    public void deleteSeller(Long id) {
         logger.info("[SELLER_SERVICE][deleteSeller] Delete Seller: {}", id);
-        Handler<SellerResponse> handler = new ValidateSellerStatus();
-        ValidateResult<SellerResponse> result = handler.validate(sellerDTO);
-
-        if(result.isStatus()){
-            throw new RuntimeException(result.getMessage());
-        }
-        seller.setSoftDelete(true);
-        sellerRepository.save(seller);
+        SellerEntity seller = getSeller(id); // User id
+        sellerRepository.deleteById(seller.getId());
     }
+
+    /**
+     * - Description: Restore seller by Id
+     * - Type: Public
+     * - Input: Id (User id)
+     * - Output: Soft-delete = true
+     **/
+    @CacheEvict(value = "sellers", key = "#id")
+    public SellerResponse restoreSeller(Long id) {
+        logger.info("[SELLER_SERVICE][restoreSeller] Restore Seller: {}", id);
+        SellerEntity seller = sellerRepository.findByUserIdIncludingDeleted(id)
+                .orElseThrow(() -> new RuntimeException("Cannot found user by id " + id));
+        sellerRepository.restoreById(id);
+        logger.info("[SELLER_SERVICE][restoreSeller] Restore seller {} successfully", id);
+        return getSellerDetails(id);
+    }
+
 }

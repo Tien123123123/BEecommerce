@@ -10,11 +10,17 @@ import org.mapstruct.Mapping;
 public interface SellerMapper {
 
     // DTO -> Entity
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "userEntity", ignore = true)
+    @Mapping(target = "shop", ignore = true)
+    @Mapping(target = "createAt", ignore = true)
+    @Mapping(target = "updateAt", ignore = true)
     SellerEntity toEntity(SellerRegisterDTORequest sellerDTO);
 
     // Entity -> DTO
     @Mapping(target = "user_id", source = "userEntity.id")
-    @Mapping(target = "shops", expression = "java(sellerEntity.getShops() != null ? " +
-            "sellerEntity.getShops().stream().map(s -> s.getShopName()).collect(java.util.stream.Collectors.toList()) : null)")
+    @Mapping(target = "shopName", source = "shop.shopName")
+    @Mapping(target = "shopAddress", source = "shop.shopAddress")
+    @Mapping(target = "softDelete", ignore = true)
     SellerResponse toDTO(SellerEntity sellerEntity);
 }

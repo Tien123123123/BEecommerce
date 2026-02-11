@@ -8,7 +8,8 @@ import com.ecommerce.be.ecommercebe.model.UserEntity;
 import com.ecommerce.be.ecommercebe.repository.UserRepository;
 import com.ecommerce.be.ecommercebe.service.handler.Handler;
 import com.ecommerce.be.ecommercebe.service.handler.ValidateResult;
-import com.ecommerce.be.ecommercebe.service.handler.userhandler.*;
+import com.ecommerce.be.ecommercebe.service.handler.userhandler.*; // Keep wildcard as in original if needed? Or specific imports? Clean imports.
+import com.ecommerce.be.ecommercebe.util.HandlerFactory;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -26,96 +27,111 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private static final Logger logger = LoggerFactory.getLogger(UserService.class);
     private final UserRepository userRepository;
+    private final HandlerFactory handlerFactory;
     private final UserMapper userMapper;
 
     /**
-     **- Create User from User DTO
-     **- Input: DTO data
-     **- Output: DTO data
-     **- Note: Data will be saved in DB and Cache (Write Back)
-     **! Cache save DTO data
+     ** - Description: Create User from User DTO
+     ** - Type: Public
+     ** - Input: DTO data
+     ** - Output: DTO data
+     ** - Note: Data will be saved in DB and Cache (Write Back)
+     ** ! Cache save DTO data
      **/
     @CachePut(value = "users", key = "#result.id")
-    public UserResponse createUser(UserRegisterDTORequest userDTO){
+    public UserResponse createUser(UserRegisterDTORequest userDTO) {
         logger.info("[USER_SERVICE][createUser] create user: {}", userDTO.getFullname());
         /**
-         - Set chain to validate Input data
-         - Use .setNext to apply next validated function
-         - Functions in handler/userhandler
+         * - Set chain to validate Input data
+         * - Use .setNext to apply next validated function
+         * - Functions in handler/userhandler
          **/
-        Handler<UserRegisterDTORequest> handler = new ValidateValidPassword();
-        handler.setNext(new ValidateUserExists(userRepository));
-
-        ValidateResult<? extends BaseValidate> result = handler.validate(userDTO);
-        if(!result.isStatus()){
-            throw new RuntimeException(result.getMessage());
+        Handler<UserRegisterDTORequest> userHandler = handlerFactory.getChain(UserRegisterDTORequest.class);
+        if (userHandler != null) {
+            ValidateResult<? extends BaseValidate> result = userHandler.validate(userDTO);
+            if (!result.isStatus()) {
+                logger.warn("[USER_SERVICE][createUser] error: {}", result.getMessage());
+                throw new RuntimeException(result.getMessage());
+            }
+        } else {
+            logger.warn("No validations chain for UserRegisterDTORequest");
         }
-        logger.info("[USER_SERVICE][createUser] Handler result: {} - {}", result.isStatus(), result.getMessage());
-
         UserEntity user = userMapper.toEntity(userDTO);
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
         UserEntity saved = userRepository.save(user);
-        logger.info("[USER_SERVICE][createUser] User Entity Key: {} - Name: {}", saved.getId(), saved.getUsername());
 
-        return userMapper.toDTO(saved);
+        logger.info("[USER_SERVICE][createUser] User Entity Key: {} - Name: {}", saved.getId(), saved.getUsername());
+        UserResponse userResponse = userMapper.toDTO(saved);
+        userResponse.setSoftDelete(userRepository.isSoftDeleted(userResponse.getId()));
+        return userResponse;
     }
+
     /**
-     **- Get User by Id
-     **- Input: User Id
-     **- Output: Entity data
+     ** - Description: Get user by id
+     ** - Type: Internal
+     ** - Input: Id
+     ** - Output: User entity
+     ** - Note: Data will be gotten from DB
      **/
-    protected UserEntity getUser(Long id){
+    protected UserEntity getUser(Long id) {
         logger.info("[USER_SERVICE][getUser] get User : {}", id);
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(()-> new RuntimeException("Invalid User By Id: " + id));
+                .orElseThrow(() -> new RuntimeException("Invalid User By Id: " + id));
         return user;
     }
+
     /**
-     **- Get User Detail by Id
-     **- Input: User Id
-     **- Output: DTO data
-     **- Note: Data will be gotten from Cache and DB (Read Through)
-     **! Cache save DTO data
+     ** - Description: Get user by id
+     ** - Type: Public
+     ** - Input: Id
+     ** - Output: DTO data
+     ** - Note: Data will be gotten from Cache then DB (Read Through)
+     ** ! Cache save DTO data
      **/
     @Cacheable(value = "users", key = "#id")
-    public UserResponse getUserDetail(Long id){
-        return userMapper.toDTO(getUser(id));
+    public UserResponse getUserDetail(Long id) {
+        UserEntity user = getUser(id);
+        UserResponse userResponse = userMapper.toDTO(user);
+        userResponse.setSoftDelete(userRepository.isSoftDeleted(id));
+        return userResponse;
     }
 
     /**
-     **- Soft delete User by Id
-     **- Input: User Id
-     **- Output: user soft-delete = true
-     **- Note: Data will only be removed from Cache
+     ** - Description: Delete User base on Id
+     ** - Type: Public
+     ** - Input: Id
+     ** - Output: Soft-delete = true
+     ** - Note: Cache will remove data after succeed!
      **/
     @CacheEvict(value = "users", key = "#id")
-    public void deleteUser(Long id){
-        logger.info("[USER_SERVICE][deleteUser] Deleting user: {}", id );
-        UserEntity user = getUser(id);
-        if(user.isSoftDelete()){
-            throw new RuntimeException("This user is banned!");
+    public void deleteUser(Long id) {
+        logger.info("[USER_SERVICE][deleteUser] Deleting user: {}", id);
+        if (userRepository.isSoftDeleted(id)) {
+            throw new RuntimeException("This user is already deleted!");
         }
-        user.setSoftDelete(true);
-        logger.info("User {} is banned!", user.getUsername());
+        userRepository.softDeleteById(id);
     }
+
     /**
-     **- Restore soft-deleted User by Id
-     **- Input: User Id
-     **- Output: user soft-delete = false
+     ** - Description: Restore soft-deleted User by Id
+     ** - Type: Public
+     ** - Input: User Id
+     ** - Output: Soft-delete = false
+     ** - Note: Cache to update
      **/
-    @CacheEvict(value = "users", key = "#id")
     @CachePut(value = "users", key = "#id")
-    public UserResponse restoreUser(Long id){
-        logger.info("[USER_SERVICE][restoreUser] recovering deleted user: {}", id );
-        UserEntity user = getUser(id);
-
-        if(!user.isSoftDelete()){
-            throw new RuntimeException("User is not deleted!");
+    public UserResponse restoreUser(Long id) {
+        logger.info("[USER_SERVICE][restoreUser] recovering deleted user: {}", id);
+        if (!userRepository.isSoftDeleted(id)) {
+            logger.warn("User {} is not deleted!", id);
         }
+        userRepository.restoreById(id);
+        UserEntity user = getUser(id);
+        logger.info("[USER_SERVICE][restoreUser] user roles: {} ", user.getRoles());
 
-        user.setSoftDelete(false);
-        logger.info("User {} is restored", user.getUsername());
-        UserEntity saved = userRepository.save(user);
-        return userMapper.toDTO(saved);
+        logger.info("[USER_SERVICE][restoreUser] user {} is restored successfully!", user.getId());
+        UserResponse userResponse = userMapper.toDTO(user);
+        userResponse.setSoftDelete(userRepository.isSoftDeleted(id));
+        return userResponse;
     }
 }

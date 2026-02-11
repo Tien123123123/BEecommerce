@@ -11,12 +11,15 @@ public interface UserMapper {
 
     // DTO -> Entity
     @Mapping(target = "password", ignore = true)
+    @Mapping(target = "roles", ignore = true)
     @Mapping(target = "seller", ignore = true)
+    @Mapping(target = "orders", ignore = true)
+    @Mapping(target = "carts", ignore = true)
+    @Mapping(target = "createAt", ignore = true)
+    @Mapping(target = "updateAt", ignore = true)
     UserEntity toEntity(UserRegisterDTORequest userDTO);
 
-
-    UserEntity toEntity(UserResponse userDTO);
     // Entity -> DTO
-    @Mapping(target = "id", source = "id")
+    @Mapping(target = "softDelete", ignore = true)
     UserResponse toDTO(UserEntity userEntity);
 }

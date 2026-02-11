@@ -17,15 +17,13 @@ public class EcommerceBeApplication {
     }
 
     @Bean
-    NewTopic notification(){
+    NewTopic notification() {
         // Topic + partitions + brokers
         return new NewTopic("notification", 2, (short) 1);
     }
 
     @Bean
-    NewTopic statistic(){
-        // Topic + partitions + brokers
-        return new NewTopic("statistic", 1, (short) 1);
+    NewTopic userEvents() {
+        return new NewTopic("user-events", 3, (short) 1);
     }
-
 }

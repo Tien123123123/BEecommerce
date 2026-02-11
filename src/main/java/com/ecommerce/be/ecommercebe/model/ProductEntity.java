@@ -19,6 +19,11 @@ public class ProductEntity extends BaseEntity{
     private String slug; //? Beautiful product url
     private String description;
 
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductVariantEntity> variants = new ArrayList<>();
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ProductImageEntity> productImages = new ArrayList<>();
+
     @ManyToMany
     @JoinTable(
             name = "product_categories",

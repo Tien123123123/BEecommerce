@@ -28,7 +28,7 @@ public class UserEntity extends BaseEntity{
     private String phone;
     @Column
     private String address;
-    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.EAGER) // EAGER -> Instance Load
+    @ElementCollection(targetClass = UserRole.class, fetch = FetchType.LAZY) // EAGER -> Instance Load
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Enumerated(EnumType.STRING) // String | Ordinal
     @Column
@@ -38,12 +38,21 @@ public class UserEntity extends BaseEntity{
     @OneToOne(mappedBy = "userEntity", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonManagedReference
     private SellerEntity seller;
-
     // Order
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<OrderEntity> orders = new ArrayList<>();
+    // Cart
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CartEntity> carts = new ArrayList<>();
 
     public enum UserRole{
         BUYER, SELLER, ADMIN
+    }
+
+    public void setSeller(SellerEntity seller) {
+        this.seller = seller;
+        if (seller != null) {
+            seller.setUserEntity(this);
+        }
     }
 }

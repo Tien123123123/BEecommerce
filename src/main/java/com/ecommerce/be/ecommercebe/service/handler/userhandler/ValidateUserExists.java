@@ -7,8 +7,12 @@ import com.ecommerce.be.ecommercebe.repository.UserRepository;
 import com.ecommerce.be.ecommercebe.service.handler.Handler;
 import com.ecommerce.be.ecommercebe.service.handler.ValidateResult;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.annotation.Order;
+import org.springframework.stereotype.Component;
 
 @RequiredArgsConstructor
+@Component
+@Order(2)
 public class ValidateUserExists extends Handler<UserRegisterDTORequest> {
     private final UserRepository userRepository;
 

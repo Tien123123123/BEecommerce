@@ -12,20 +12,22 @@ import org.springframework.stereotype.Component;
 public class UserKafkaConsumer {
     private static final Logger logger = LoggerFactory.getLogger(UserKafkaConsumer.class);
 
-//    @KafkaListener(topics = "user-events", groupId = "ecommerce-kafka")
-//    public void testKafka(
-//            UserResponse userDTO, // Đảm bảo UserResponse có @NoArgsConstructor
-//            @Header(KafkaHeaders.RECEIVED_KEY) String user_id,
-//            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
-//            @Header(KafkaHeaders.OFFSET) long offset
-//    ) {
-//        logger.info("Data received from kafka");
-//        logger.info("Received user event - Key (userId): {}, Partition: {}, Offset: {}, UserId từ payload: {}",
-//                user_id, partition, offset, userDTO.getId());
-//        logger.info("User DTO: " + userDTO);
-//
-//        if (userDTO.getId() != null && !user_id.equals(String.valueOf(userDTO.getId()))) {
-//            logger.warn("Key không khớp với id trong payload!");
-//        }
-//    }
+    @KafkaListener(topics = "user-events", groupId = "ecommerce-group")
+    public void consumeUserEvent(
+            UserResponse userDTO,
+            @Header(KafkaHeaders.RECEIVED_KEY) String userId,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) long offset) {
+        logger.info("[KAFKA_CONSUMER] Received event for User: {}", userDTO.getFullname());
+        logger.info("[KAFKA_CONSUMER] Metadata - Topic: user-events, Key: {}, Partition: {}, Offset: {}", userId,
+                partition, offset);
+
+        // Giả sử đây là nơi bạn gọi Notification Service để gửi email chào mừng
+        sendWelcomeEmail(userDTO);
+    }
+
+    private void sendWelcomeEmail(UserResponse user) {
+        logger.info("[NOTIFICATION_SERVICE] Sending welcome email to: {}", user.getEmail());
+        // Logic gửi email thực tế sẽ nằm ở đây
+    }
 }

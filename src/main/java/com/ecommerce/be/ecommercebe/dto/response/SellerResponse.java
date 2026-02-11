@@ -13,7 +13,8 @@ public class SellerResponse implements BaseValidate {
     private Long user_id;
     private String citizenIdentity;
     private Boolean softDelete;
-    private List<String> shops;
+    private String shopName;
+    private String shopAddress;
 
     @Override
     public Long getId() {
