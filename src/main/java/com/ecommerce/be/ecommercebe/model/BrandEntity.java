@@ -11,7 +11,7 @@ import java.util.List;
 @Table(name = "brands")
 @Getter
 @Setter
-public class BrandEntity extends BaseEntity{
+public class BrandEntity extends BaseEntity {
     @Column(name = "brand_name")
     private String brandName;
     private String slug; // Beautiful brand url
