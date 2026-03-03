@@ -1,5 +1,6 @@
 package com.ecommerce.be.ecommercebe.dto.response;
 
+import com.ecommerce.be.ecommercebe.dto.BaseValidate;
 import lombok.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -9,7 +10,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class VariantResponse {
+public class VariantResponse implements BaseValidate {
 
     private Long id;
     private String sku;

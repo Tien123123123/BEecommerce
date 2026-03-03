@@ -33,11 +33,12 @@ public class CategoryService {
         return response;
     }
 
-    @Cacheable(value = "categories", key = "#id")
     public CategoryEntity getCategory(Long id){
         return categoryRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Invalid category by id " + id));
     }
+
+    @Cacheable(value = "categories", key = "#id")
     public CategoryResponse getCategoryDetail(Long id){
         CategoryEntity entity = getCategory(id);
 

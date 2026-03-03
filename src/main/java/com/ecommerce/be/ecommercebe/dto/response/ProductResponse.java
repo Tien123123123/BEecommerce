@@ -1,5 +1,6 @@
 package com.ecommerce.be.ecommercebe.dto.response;
 
+import com.ecommerce.be.ecommercebe.dto.BaseValidate;
 import lombok.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import java.util.Set;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ProductResponse {
+public class ProductResponse implements BaseValidate {
 
     private Long id;
     private String productName;

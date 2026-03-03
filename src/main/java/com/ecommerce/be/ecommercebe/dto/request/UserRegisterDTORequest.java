@@ -1,16 +1,15 @@
 package com.ecommerce.be.ecommercebe.dto.request;
 
 import com.ecommerce.be.ecommercebe.dto.BaseValidate;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.Setter;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -44,6 +43,9 @@ public class UserRegisterDTORequest implements BaseValidate {
     @Pattern(regexp = "^(0[3|5|7|8|9])[0-9]{8}$",
             message = "Phone number must be a valid Vietnamese mobile number (starts with 03, 05, 07, 08, or 09)")
     private String phone;
+
+    @NotEmpty(message = "Address list cannot be empty!")
+    private List<AddressDTORequest> addressList = new ArrayList<>();
 
     private static final ObjectMapper mapper = new ObjectMapper();
 

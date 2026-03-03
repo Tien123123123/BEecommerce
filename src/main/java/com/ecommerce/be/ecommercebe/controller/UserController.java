@@ -1,13 +1,16 @@
 package com.ecommerce.be.ecommercebe.controller;
 
 import com.ecommerce.be.ecommercebe.dto.request.SellerRegisterDTORequest;
+import com.ecommerce.be.ecommercebe.dto.request.ShipperDTORequest;
 import com.ecommerce.be.ecommercebe.dto.request.UserRegisterDTORequest;
 import com.ecommerce.be.ecommercebe.dto.response.ResponseData;
 import com.ecommerce.be.ecommercebe.dto.response.SellerResponse;
+import com.ecommerce.be.ecommercebe.dto.response.ShipperResponse;
 import com.ecommerce.be.ecommercebe.dto.response.UserResponse;
 import com.ecommerce.be.ecommercebe.dto.response.mapper.SellerMapper;
 import com.ecommerce.be.ecommercebe.dto.response.mapper.UserMapper;
 import com.ecommerce.be.ecommercebe.service.SellerService;
+import com.ecommerce.be.ecommercebe.service.ShipperService;
 import com.ecommerce.be.ecommercebe.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class UserController {
     private static final Logger logger = LoggerFactory.getLogger(UserController.class);
     private final UserService userService;
     private final SellerService sellerService;
+    private final ShipperService shipperService;
 
     private final KafkaTemplate<String, Object> kafkaTemplate;
     private final String TOPIC = "user-events";
@@ -54,6 +58,13 @@ public class UserController {
         // logger.info("[USER_CONTROLLER] Send userDTO to Kafka with Topic: {} - user
         // Id: {}", TOPIC, user.getId());
         return new ResponseData<UserResponse>("User info!", HttpStatus.FOUND.value(), user);
+    }
+    @PatchMapping("/shipper")
+    public ResponseData<ShipperResponse> promoteShipper(@RequestBody ShipperDTORequest dto){
+        logger.info("[USER_CONTROLLER] promote User " + dto.getUserId() + " to Shipper");
+        ShipperResponse response = shipperService.createShipper(dto);
+
+        return new ResponseData<>("Promote shipper succeed!", HttpStatus.ACCEPTED.value(), response);
     }
 
     /**

@@ -54,4 +54,11 @@ public class ProductEntity extends BaseEntity {
         variants.add(entity);
         entity.setProduct(this);
     }
+
+    public void addCategory(CategoryEntity entity){
+        if(this.categories == null){
+            return;
+        }
+        this.categories.add(entity);
+    }
 }

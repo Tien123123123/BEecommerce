@@ -8,7 +8,9 @@ import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -24,5 +26,5 @@ public class CategoryEntity extends BaseEntity {
     private int sortOrder;
 
     @ManyToMany(mappedBy = "categories")
-    private Set<ProductEntity> products = new HashSet<>();
+    private List<ProductEntity> products = new ArrayList<>();
 }

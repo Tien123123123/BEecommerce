@@ -1,9 +1,12 @@
 package com.ecommerce.be.ecommercebe.service;
 
 import com.ecommerce.be.ecommercebe.dto.BaseValidate;
+import com.ecommerce.be.ecommercebe.dto.request.AddressDTORequest;
 import com.ecommerce.be.ecommercebe.dto.request.UserRegisterDTORequest;
 import com.ecommerce.be.ecommercebe.dto.response.UserResponse;
+import com.ecommerce.be.ecommercebe.dto.response.mapper.AddressMapper;
 import com.ecommerce.be.ecommercebe.dto.response.mapper.UserMapper;
+import com.ecommerce.be.ecommercebe.model.AddressEntity;
 import com.ecommerce.be.ecommercebe.model.UserEntity;
 import com.ecommerce.be.ecommercebe.repository.UserRepository;
 import com.ecommerce.be.ecommercebe.service.handler.Handler;
@@ -20,6 +23,8 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -29,6 +34,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final HandlerFactory handlerFactory;
     private final UserMapper userMapper;
+    private final AddressMapper addressMapper;
 
     /**
      ** - Description: Create User from User DTO
@@ -58,6 +64,14 @@ public class UserService {
         }
         UserEntity user = userMapper.toEntity(userDTO);
         user.setPassword(passwordEncoder.encode(userDTO.getPassword()));
+
+        // Address
+        user.setAddressList(new ArrayList<>());
+        for(AddressDTORequest addressDTO : userDTO.getAddressList()){
+            AddressEntity addressEntity = addressMapper.toEntity(addressDTO);
+            user.addAddress(addressEntity);
+        }
+
         UserEntity saved = userRepository.save(user);
 
         logger.info("[USER_SERVICE][createUser] User Entity Key: {} - Name: {}", saved.getId(), saved.getUsername());

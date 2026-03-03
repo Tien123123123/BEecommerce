@@ -7,6 +7,7 @@ import com.ecommerce.be.ecommercebe.model.ProductEntity;
 import jdk.jfr.Name;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -24,11 +25,11 @@ public interface ProductMapper {
 
     // Entity to DTO
     @Mapping(target = "shopId", source = "shop.id")
-    @Mapping(target = "brandId", source = "brand.id", ignore = true)
-    @Mapping(target = "categoryIds", qualifiedByName = "getCategoryId", ignore = true)
+    @Mapping(target = "brandId", source = "brand.id")
+    @Mapping(target = "categoryIds", source = "categories", qualifiedByName = "getCategoryId")
     ProductResponse toDTO(ProductEntity entity);
 
-    @Name("getCategoryId")
+    @Named("getCategoryId")
     default Set<Long> getCategoryId(Set<CategoryEntity> categories) {
         if (categories == null) {
             return null;
