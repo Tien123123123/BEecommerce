@@ -18,7 +18,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -59,6 +63,14 @@ public class UserController {
         // Id: {}", TOPIC, user.getId());
         return new ResponseData<UserResponse>("User info!", HttpStatus.FOUND.value(), user);
     }
+    @GetMapping
+    public ResponseData<UserResponse> getCurrUser(@AuthenticationPrincipal Jwt jwt){
+        String email = jwt.getSubject();
+        UserResponse response = userService.getCurrUserDetail();
+
+        return new ResponseData<>("Succeed!", HttpStatus.ACCEPTED.value(), response);
+    }
+
     @PatchMapping("/shipper")
     public ResponseData<ShipperResponse> promoteShipper(@RequestBody ShipperDTORequest dto){
         logger.info("[USER_CONTROLLER] promote User " + dto.getUserId() + " to Shipper");

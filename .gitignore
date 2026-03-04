@@ -36,3 +36,5 @@ build/
 .env
 *.md
 ### Resources ###
+src/main/resources/certs/
+*.pem

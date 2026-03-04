@@ -41,3 +41,9 @@ spring:
       properties:
         spring.json.trusted.packages: "com.ecommerce.be.*"
         spring.json.use.type.headers: true
+
+rsa:
+  public-key: file:certs/public.pem
+  private-key: file:certs/private.pem
+
+

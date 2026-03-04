@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Optional;
+
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     boolean existsByEmail(String email);
@@ -22,4 +24,6 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query(value = "UPDATE users SET soft_delete = false WHERE id = :id", nativeQuery = true)
     void restoreById(@Param("id") Long id);
+
+    Optional<UserEntity> findByEmail(String email);
 }

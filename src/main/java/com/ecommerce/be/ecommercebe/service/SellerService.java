@@ -1,8 +1,8 @@
 package com.ecommerce.be.ecommercebe.service;
 
+import com.ecommerce.be.ecommercebe.constant.user.UserRole;
 import com.ecommerce.be.ecommercebe.dto.BaseValidate;
 import com.ecommerce.be.ecommercebe.dto.request.SellerRegisterDTORequest;
-import com.ecommerce.be.ecommercebe.dto.request.UserRegisterDTORequest;
 import com.ecommerce.be.ecommercebe.dto.response.SellerResponse;
 import com.ecommerce.be.ecommercebe.dto.response.UserResponse;
 import com.ecommerce.be.ecommercebe.dto.response.mapper.SellerMapper;
@@ -88,7 +88,7 @@ public class SellerService {
         // ? Set Seller
         user.setSeller(seller);
         // ? Add Role
-        user.getRoles().add(UserEntity.UserRole.SELLER);
+        user.getRoles().add(UserRole.SELLER);
 
         logger.info("[SELLER_SERVICE][promoteToSeller] Get Seller {} Info before save",
                 seller.getUserEntity().getFullname());

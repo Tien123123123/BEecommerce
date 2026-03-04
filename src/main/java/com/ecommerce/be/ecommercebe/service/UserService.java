@@ -20,7 +20,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -93,6 +97,12 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("Invalid User By Id: " + id));
         return user;
     }
+    protected UserEntity getCurrUser(String userEmail){
+        logger.info("[USER_SERVICE][getCurrUser] get current User : {}", userEmail);
+        UserEntity user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new UsernameNotFoundException("Invalid User by email: " + userEmail));
+        return user;
+    }
 
     /**
      ** - Description: Get user by id
@@ -107,6 +117,22 @@ public class UserService {
         UserEntity user = getUser(id);
         UserResponse userResponse = userMapper.toDTO(user);
         userResponse.setSoftDelete(userRepository.isSoftDeleted(id));
+        return userResponse;
+    }
+    public UserResponse getCurrUserDetail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = null;
+        String roles = null;
+
+        if(authentication != null && authentication.getPrincipal() instanceof Jwt){
+            Jwt jwt = (Jwt) authentication.getPrincipal();
+            email = jwt.getSubject();
+            roles = jwt.getClaimAsString("roles");
+        }
+
+        UserEntity user = getCurrUser(email);
+        UserResponse userResponse = userMapper.toDTO(user);
+        userResponse.setSoftDelete(userRepository.isSoftDeleted(user.getId()));
         return userResponse;
     }
 

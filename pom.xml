@@ -34,6 +34,8 @@
         <lomstruct.version>0.2.0</lomstruct.version>
         <!-- Kafka -->
         <spring-kafka.version>3.3.11</spring-kafka.version>
+        <!-- Security -->
+        <numbis.version>10.8</numbis.version>
 
     </properties>
     <dependencies>
@@ -53,6 +55,17 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-resource-server</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>com.nimbusds</groupId>
+            <artifactId>nimbus-jose-jwt</artifactId>
+            <version>${numbis.version}</version>
         </dependency>
 
         <!-- Test -->
